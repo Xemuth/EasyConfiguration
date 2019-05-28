@@ -1,0 +1,10 @@
+uses
+	Core;
+
+file
+	EasyConfiguration.h,
+	EasyConfiguration.cpp;
+
+mainconfig
+	"" = "";
+
