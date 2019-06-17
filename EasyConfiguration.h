@@ -52,15 +52,16 @@ Thanks to UPP team !
 class EasyConfiguration{
 	private:
 		VectorMap<String,Upp::Value> ConfigurationType;
-		String pathToLocalConfig="";
-		String pathToGlobalConfig="";
 		
 		bool SaveInRelaxed =true; //If set to false then the save mode will be "Strict Mode"
+		
+		String FileOpened=""; //Save when LoadConfiguration is used
+		String FileName=""; //Save nane of latest file save/Loaded
 		
 		bool ResolveAndAddLine(String line);
 		bool isStringisANumber(String stringNumber);
 	protected:
-		const ConfigurationType& GetConfiguration()const;
+		const VectorMap<String,Upp::Value>& GetConfiguration()const;
 	public:
 		EasyConfiguration();
 		EasyConfiguration(const EasyConfiguration& ec); //Copy constructor 
@@ -70,10 +71,15 @@ class EasyConfiguration{
 		bool MergeUpdateConfiguration(const EasyConfiguration& ec); //Add and update every new configuration value
 		bool MergeConfiguration(const EasyConfiguration& ec); //Add every new tag to actual configuration
 		
+		void RelaxMode(bool b);
+		bool isRelaxMode();
 		int GetCount();
 		
+		bool SaveConfiguration();
+		EasyConfiguration SaveConfiguration(String filePath);
+		
 		template <class T> T GetValue(String fieldName); //Return value from ConfigrationType
-		template <class T> bool SetValue(String fieldName, const T &t);
+		template <class T> bool SetValue(String fieldName, const T &t); 
 		
 		int LoadConfiguration(String FilePath); //Return number of configuration loaded
 		

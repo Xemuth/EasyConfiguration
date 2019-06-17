@@ -61,7 +61,7 @@ int EasyConfiguration::LoadConfiguration(String FilePath){
 	return 0;
 }
 
-const ConfigurationType& EasyConfiguration::GetConfiguration()const{
+const VectorMap<String,Upp::Value>& EasyConfiguration::GetConfiguration()const{
 	return this->ConfigurationType;	
 }
 
@@ -140,9 +140,19 @@ bool EasyConfiguration::isStringisANumber(Upp::String stringNumber){
     return false;
 }
 
+bool EasyConfiguration::SaveConfiguration(){
+	
+}
+EasyConfiguration EasyConfiguration::SaveConfiguration(String filePath){
+	
+}
 		
 		
 bool EasyConfiguration::NewConfiguration(const EasyConfiguration& ec){ //Used to copy configuration from ec to this
+	ConfigurationType.Clear();
+	for(const String &key : ec.GetConfiguration().GetKeys()){
+		SetValue(key,ec.GetConfiguration().Get(key));
+	}
 }
 
 bool EasyConfiguration::UpdateConfigurationFromMaster(const EasyConfiguration& ec){ //Used to update all this value by ec value (do not add new value to this, just update existing value)
@@ -155,9 +165,19 @@ bool EasyConfiguration::MergeConfiguration(const EasyConfiguration& ec){ //Add e
 	
 }
 
+void EasyConfiguration::RelaxMode(bool b){
+	SaveInRelaxed = b;
+}
+bool EasyConfiguration::isRelaxMode(){
+	return SaveInRelaxed;	
+}
+
 EasyConfiguration::EasyConfiguration(){
 }
 
-EasyConfiguration::EasyConfiguration(const EasyConfiguration& ec){
-	
+EasyConfiguration::EasyConfiguration(const EasyConfiguration& ec) {
+	this->RelaxMode(ec->isRelaxMode());
+	for(const String &key : ec.GetConfiguration().GetKeys()){
+		SetValue(key,ec.GetConfiguration().Get(key));
+	}
 }
