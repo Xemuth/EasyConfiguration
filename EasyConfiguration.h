@@ -56,11 +56,12 @@ class EasyConfiguration{
 		bool SaveInRelaxed =true; //If set to false then the save mode will be "Strict Mode"
 		
 		String FileOpened=""; //Save when LoadConfiguration is used
-		String FileName=""; //Save nane of latest file save/Loaded
 		
 		bool ResolveAndAddLine(String line);
 		bool isStringisANumber(String stringNumber);
 	protected:
+		const String GetFileOpened();
+		
 		const VectorMap<String,Upp::Value>& GetConfiguration()const;
 	public:
 		EasyConfiguration();

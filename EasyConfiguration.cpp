@@ -19,10 +19,9 @@ CONSOLE_APP_MAIN
 	Cout() << "test3 : " << ez.GetValue<int>("test3") << "\n";
 	Cout() << "test4 : " << ez.GetValue<double>("test4") << "\n";
 	Cout() << "Test5 (Int non definie) : " << ez.GetValue<int>("test5") <<"\n";*/
-	ez.LoadConfiguration("RelaxedModeExample.cfg");
-	Cout() << "Valeur chargé " << ez.GetCount();
-	Cout() << "instance : " << ez.GetValue<String>("instance") << "\n";
-	Cout() << "version : " << ez.GetValue<bool>("version") << "\n";
+	Cout() << ez.LoadConfiguration(R"(\\qf53418\esp34\AGF_ASSURANCES\DIR_INDEMNISATION\AOO\localAOO.cfg)")<<"\n";
+	ez.RelaxMode(false);
+	ez.SaveConfiguration("local.cfg");
 	
 }
 
@@ -48,11 +47,12 @@ bool EasyConfiguration::SetValue(String fieldName, const T &t){
 
 int EasyConfiguration::LoadConfiguration(String FilePath){
 	if (FileExists(FilePath)){
+		FileOpened = FilePath;
 		FileIn in(FilePath);
 		if (in){
 			while(!in.IsEof()){
 				ResolveAndAddLine(in.GetLine());
-			
+				
 			}
 			in.Close();
 			return ConfigurationType.GetCount();
@@ -141,11 +141,45 @@ bool EasyConfiguration::isStringisANumber(Upp::String stringNumber){
 }
 
 bool EasyConfiguration::SaveConfiguration(){
-	
+	if(FileOpened.GetCount() != 0){
+		FileIn in(FileOpened);
+		if(in){
+			for(const String &e : ConfigurationType.GetKeys()){
+				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
+					in << ((SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
+				}else if( ConfigurationType.Get(e).GetTypeName().IsEqual("bool")){
+					in << ((SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<bool>() <<"\n";
+				}else if(  ConfigurationType.Get(e).GetTypeName().IsEqual("int")){
+					in << ((SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<int>() <<"\n";
+				}
+			}
+			in.Close();
+		}
+	}
 }
+
 EasyConfiguration EasyConfiguration::SaveConfiguration(String filePath){
-	
+	if(filePath.GetCount() != 0){
+		FileOut  out(filePath);
+		if(out){
+			for(const String &e : ConfigurationType.GetKeys()){
+				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
+					out << ((!SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((!SaveInRelaxed)? "->":"") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
+				}else if( ConfigurationType.Get(e).GetTypeName().IsEqual("bool")){
+					out << ((!SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((!SaveInRelaxed)? "->":"") << e << "=" << ((ConfigurationType.Get(e).Get<int>()!=0)?"true":"false") <<"\n";
+				}else if(  ConfigurationType.Get(e).GetTypeName().IsEqual("int")){
+					out << ((!SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((!SaveInRelaxed)? "->":"") << e << "=" << ConfigurationType.Get(e).Get<int>() <<"\n";
+				}
+			}
+			out.Close();
+		}
+	}
 }
+
+const String EasyConfiguration::GetFileOpened(){
+	return FileOpened;
+}
+
 		
 		
 bool EasyConfiguration::NewConfiguration(const EasyConfiguration& ec){ //Used to copy configuration from ec to this
@@ -176,7 +210,7 @@ EasyConfiguration::EasyConfiguration(){
 }
 
 EasyConfiguration::EasyConfiguration(const EasyConfiguration& ec) {
-	this->RelaxMode(ec->isRelaxMode());
+//	this->RelaxMode(ec.isRelaxMode());
 	for(const String &key : ec.GetConfiguration().GetKeys()){
 		SetValue(key,ec.GetConfiguration().Get(key));
 	}
