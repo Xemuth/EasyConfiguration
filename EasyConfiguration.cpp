@@ -3,10 +3,14 @@
 #include <cctype>
 using namespace Upp;
 
+
+
+
+/*
 CONSOLE_APP_MAIN
 {
 	EasyConfiguration ez;
-/*	try{
+	try{
 		ez.SetValue<bool>("test",true); 
 		ez.SetValue<String>("test2", "Hello World");
 		ez.SetValue<int>("test3",123);
@@ -18,14 +22,14 @@ CONSOLE_APP_MAIN
 	Cout() << "test2 : " << ez.GetValue<String>("test2") << "\n";
 	Cout() << "test3 : " << ez.GetValue<int>("test3") << "\n";
 	Cout() << "test4 : " << ez.GetValue<double>("test4") << "\n";
-	Cout() << "Test5 (Int non definie) : " << ez.GetValue<int>("test5") <<"\n";*/
+	Cout() << "Test5 (Int non definie) : " << ez.GetValue<int>("test5") <<"\n";
 	Cout() << ez.LoadConfiguration(R"(\\qf53418\esp34\AGF_ASSURANCES\DIR_INDEMNISATION\AOO\localAOO.cfg)")<<"\n";
 	ez.RelaxMode(false);
 	ez.SaveConfiguration("local.cfg");
 	
-}
-
-template <class T>   
+}*/
+/*
+template <class T> 
 T EasyConfiguration::GetValue(String fieldName){
 	int index = ConfigurationType.Find(fieldName);
 	if(index >= 0 && ConfigurationType[index].Is<T>()){
@@ -34,7 +38,7 @@ T EasyConfiguration::GetValue(String fieldName){
 	return T();
 }
 
-template <class T>
+template <class T> 
 bool EasyConfiguration::SetValue(String fieldName, const T &t){
 	try{
 		if(&ConfigurationType.Add(fieldName,Value(t)))
@@ -43,7 +47,7 @@ bool EasyConfiguration::SetValue(String fieldName, const T &t){
 		throw e;	
 	}
 	return false;
-}
+}*/
 
 int EasyConfiguration::LoadConfiguration(String FilePath){
 	if (FileExists(FilePath)){
@@ -86,7 +90,17 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 						SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false)   );
 					}
 				}else if(type.IsEqual("int")){
-					SetValue<int>(name,std::stoi(value.ToStd()) );
+					if(value.GetCount() > 9){
+						SetValue<double>(name,std::stoi(value.ToStd()));
+					}else if(value.Find(",") || value.Find(".")){
+						SetValue<float>(name,std::stoi(value.ToStd()));
+					}else{
+						SetValue<int>(name,std::stoi(value.ToStd()));
+					}
+			    }else if(type.IsEqual("double")){
+			        SetValue<double>(name,std::stoi(value.ToStd()));
+			    }else if(type.IsEqual("float")){
+			    	SetValue<float>(name,std::stoi(value.ToStd()));
 				}else if(type.IsEqual("rc4")){
 					if (value.GetCount() > 0 &&  value[0] != '@'){
 						value = '@' + value;
@@ -103,8 +117,14 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 			String value = line.Right(line.GetCount()-(line.Find("=")+1));
 			String type = "";
 			if(value.GetCount()> 0 && isStringisANumber(value)){
-				type="int";
-				SetValue<int>(name,std::stoi(value.ToStd()) );
+				if(value.GetCount() > 9){
+					SetValue<double>(name,std::stoi(value.ToStd()));
+				}else if(value.Find(",") || value.Find(".")){
+					SetValue<float>(name,std::stoi(value.ToStd()));
+				}else{
+					type="int";
+					SetValue<int>(name,std::stoi(value.ToStd()));
+				}
 			}else if(value.GetCount()> 0 && ((value[0] == 'b' && isStringisANumber(value.Right(value.GetCount()-1))) || (value.IsEqual("true") || value.IsEqual("false")))  ){
 				if(value.Find("b")>-1 && isStringisANumber(value.Right(value.GetCount()-1)) ){
 					value.Replace("b","");
@@ -208,7 +228,9 @@ bool EasyConfiguration::isRelaxMode(){
 
 EasyConfiguration::EasyConfiguration(){
 }
-
+EasyConfiguration::EasyConfiguration(Upp::String FilePath){
+	LoadConfiguration(FilePath);
+}
 EasyConfiguration::EasyConfiguration(const EasyConfiguration& ec) {
 //	this->RelaxMode(ec.isRelaxMode());
 	for(const String &key : ec.GetConfiguration().GetKeys()){

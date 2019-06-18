@@ -65,6 +65,7 @@ class EasyConfiguration{
 		const VectorMap<String,Upp::Value>& GetConfiguration()const;
 	public:
 		EasyConfiguration();
+		EasyConfiguration(Upp::String FilePath);
 		EasyConfiguration(const EasyConfiguration& ec); //Copy constructor 
 		
 		bool NewConfiguration(const EasyConfiguration& ec); //Used to copy configuration from ec to this
@@ -79,8 +80,26 @@ class EasyConfiguration{
 		bool SaveConfiguration();
 		EasyConfiguration SaveConfiguration(String filePath);
 		
-		template <class T> T GetValue(String fieldName); //Return value from ConfigrationType
-		template <class T> bool SetValue(String fieldName, const T &t); 
+		template <class T>  //Return value from ConfigrationType
+		T GetValue(String fieldName){
+			int index = ConfigurationType.Find(fieldName);
+			if(index >= 0 && ConfigurationType[index].Is<T>()){
+				return (T)ConfigurationType[index].Get<T>();
+			}
+			return T();
+		}
+		
+		
+		template <class T> 
+		bool SetValue(String fieldName, const T &t){
+			try{
+				if(&ConfigurationType.Add(fieldName,Value(t)))
+					return true;
+			}catch(Upp::ValueTypeError &e){
+				throw e;	
+			}
+			return false;
+		} 
 		
 		int LoadConfiguration(String FilePath); //Return number of configuration loaded
 		
