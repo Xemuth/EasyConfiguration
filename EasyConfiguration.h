@@ -46,7 +46,7 @@ Upp RC4 is specifique rc4 from Stream Cypher package (bazzar)
 
 ABOUT RC4 type specifier  : The RC4 type specifier ensure the string stocked in the .cfg will
 be cast into RC4. However the string to be cast need to start by @ or must be strickly
-specifier RC4. When the string is encrypted  with RC4 . it's encrypted without the starting @
+specifier RC4. When the string is encrypted  with RC4 .It's encrypted without the starting @
 but with the lastChar contening @ . it Mean if you decode the RC4 from another way/Software you
 must also delete the last char (the '@'). In EasyConfiguration the last @ is deleted
 automaticly but when decrypted the soft re add the first @ to remember it must be crypted with
@@ -70,13 +70,13 @@ class EasyConfiguration{
 		bool SaveInRelaxed =true; //If set to false then the save mode will be "Strict Mode"
 		
 		String FileOpened=""; //Save when LoadConfiguration is used
-		RC4 Rc4; //Define the default passPhrase of Encryption/Description rc4
+		RC4 Rc4; //Define the default passPhrase of Encryption/Decryption rc4
 				
-		
 		bool ResolveAndAddLine(String line);
 		bool isStringisANumber(String stringNumber);
 	protected:
-		const String GetFileOpened();
+		bool UltraUpdate(const EasyConfiguration& ec,bool update = true,bool merge = false );
+		const String GetFileOpened() const;
 		String rc4Key="default";
 		const VectorMap<String,Upp::Value>& GetConfiguration()const;
 	public:
@@ -95,12 +95,12 @@ class EasyConfiguration{
 		bool setRC4Key(Upp::String _rc4Key);
 		
 		bool SaveConfiguration();
-		bool SaveConfiguration(String filePath);
+		bool SaveConfiguration(String filePath,bool changePath=false);
 		
 		
 		
 		template <class T>  //Return value from ConfigrationType
-		T GetValue(String fieldName){
+		 T GetValue(String fieldName) const{
 			int index = ConfigurationType.Find(fieldName);
 			if(index >= 0 && ConfigurationType[index].Is<T>()){
 				return (T)ConfigurationType[index].Get<T>();
@@ -118,7 +118,7 @@ class EasyConfiguration{
 					else
 						return false;
 				}else{
-					ConfigurationType.Remove(ConfigurationType.Find(fieldName));
+					ConfigurationType.Remove(ConfigurationType.Find(fieldName)); //If yes so we replace it
 					if(&ConfigurationType.Add(fieldName,Value(t)))
 						return true;
 					else

@@ -3,66 +3,32 @@
 #include <cctype>
 using namespace Upp;
 
-
-
-
-/*
-CONSOLE_APP_MAIN
-{
-	EasyConfiguration ez;
-	try{
-		ez.SetValue<bool>("test",true); 
-		ez.SetValue<String>("test2", "Hello World");
-		ez.SetValue<int>("test3",123);
-		ez.SetValue<double>("test4",123.0);
-	}catch(Upp::ValueTypeError &e){
-		Cout() <<"Exception"<< e <<"\n";	
-	}
-	Cout() << "test1 : " << ez.GetValue<bool>("test") << "\n";
-	Cout() << "test2 : " << ez.GetValue<String>("test2") << "\n";
-	Cout() << "test3 : " << ez.GetValue<int>("test3") << "\n";
-	Cout() << "test4 : " << ez.GetValue<double>("test4") << "\n";
-	Cout() << "Test5 (Int non definie) : " << ez.GetValue<int>("test5") <<"\n";
-	Cout() << ez.LoadConfiguration(R"(\\qf53418\esp34\AGF_ASSURANCES\DIR_INDEMNISATION\AOO\localAOO.cfg)")<<"\n";
-	ez.RelaxMode(false);
-	ez.SaveConfiguration("local.cfg");
-	
-}*/
-/*
-template <class T> 
-T EasyConfiguration::GetValue(String fieldName){
-	int index = ConfigurationType.Find(fieldName);
-	if(index >= 0 && ConfigurationType[index].Is<T>()){
-		return (T)ConfigurationType[index].Get<T>();
-	}
-	return T();
+EasyConfiguration::EasyConfiguration(){
 }
 
-template <class T> 
-bool EasyConfiguration::SetValue(String fieldName, const T &t){
-	try{
-		if(&ConfigurationType.Add(fieldName,Value(t)))
-			return true;
-	}catch(Upp::ValueTypeError &e){
-		throw e;	
-	}
-	return false;
-}*/
+EasyConfiguration::EasyConfiguration(Upp::String FilePath){
+	LoadConfiguration(FilePath);
+}
 
-int EasyConfiguration::LoadConfiguration(String FilePath){
+EasyConfiguration::EasyConfiguration(const EasyConfiguration &ec) {
+	SaveInRelaxed =ec.SaveInRelaxed;
+	rc4Key = ec.rc4Key;
+	FileOpened = ec.GetFileOpened();
+	UltraUpdate(ec,true,true);
+}
+
+int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old configuration
 	if (FileExists(FilePath)){
-		ConfigurationType.Clear();
 		FileOpened = FilePath;
 		FileIn in(FilePath);
 		if (in){
 			while(!in.IsEof()){
 				ResolveAndAddLine(in.GetLine());
-				
 			}
 			in.Close();
 			return ConfigurationType.GetCount();
 		}
-	} 	
+	}
 	return 0;
 }
 
@@ -214,7 +180,7 @@ bool EasyConfiguration::SaveConfiguration(){
 	return false;
 }
 
-bool EasyConfiguration::SaveConfiguration(String filePath){
+bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){
 	if(filePath.GetCount() != 0){
 		FileOut out(filePath);
 		if(out){
@@ -241,33 +207,69 @@ bool EasyConfiguration::SaveConfiguration(String filePath){
 				LOG("Error");
 				return false;
 			}
+			if(changePath || FileOpened.GetCount()==0)FileOpened = filePath;
 			return true;
 		}
 	}
 	return false;
 }
 
-const String EasyConfiguration::GetFileOpened(){
+const String EasyConfiguration::GetFileOpened() const{
 	return FileOpened;
 }
 
+bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,bool update,bool merge){
+	bool trouver = false;
+	auto &ecConfigurationType=ec.GetConfiguration();
+	try{
+		for(const String  &key : ecConfigurationType.GetKeys()){
+			for(const String  &key2 : ConfigurationType.GetKeys() ){
+				if(key2.IsEqual(key)){
+					if(update){
+						if(ecConfigurationType.Get(key).GetTypeName().IsEqual("String")){
+							SetValue(key,ecConfigurationType.Get(key).Get<String>());
+						}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("bool")){
+							SetValue(key,ecConfigurationType.Get(key).Get<bool>());
+						}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("int")){
+							SetValue(key,ecConfigurationType.Get(key).Get<int>());
+						}
+					}
+					trouver= true;
+					break;
+				}
+			}
+			if(!trouver && merge){
+				if(ecConfigurationType.Get(key).GetTypeName().IsEqual("String")){
+					SetValue<String>(key,ecConfigurationType.Get(key).Get<String>());
+				}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("bool")){
+					SetValue(key,ecConfigurationType.Get(key).Get<bool>());
+				}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("int")){
+					SetValue(key,ecConfigurationType.Get(key).Get<int>());
+				}
+			}
+			trouver = false;
+		}
+		return true;
+	}catch(...){
+		return false;	
+	}
+	return false;
+}
 		
 		
 bool EasyConfiguration::NewConfiguration(const EasyConfiguration& ec){ //Used to copy configuration from ec to this
 	ConfigurationType.Clear();
-	for(const String &key : ec.GetConfiguration().GetKeys()){
-		SetValue(key,ec.GetConfiguration().Get(key));
-	}
+	return UltraUpdate(ec,false,true);
 }
 
 bool EasyConfiguration::UpdateConfigurationFromMaster(const EasyConfiguration& ec){ //Used to update all this value by ec value (do not add new value to this, just update existing value)
-	
+	return UltraUpdate(ec);
 }
 bool EasyConfiguration::MergeUpdateConfiguration(const EasyConfiguration& ec){ //Add and update every new configuration value
-	
+	return UltraUpdate(ec,true,true);
 }
 bool EasyConfiguration::MergeConfiguration(const EasyConfiguration& ec){ //Add every new tag to actual configuration
-	
+	return UltraUpdate(ec,false,true);
 }
 
 void EasyConfiguration::RelaxMode(bool b){
@@ -277,15 +279,4 @@ bool EasyConfiguration::isRelaxMode(){
 	return SaveInRelaxed;	
 }
 
-EasyConfiguration::EasyConfiguration(){
-}
-EasyConfiguration::EasyConfiguration(Upp::String FilePath){
-	LoadConfiguration(FilePath);
-}
-EasyConfiguration::EasyConfiguration(const EasyConfiguration &ec) {
-	SaveInRelaxed =  ec.SaveInRelaxed;
-	rc4Key = ec.rc4Key;
-	for(const String &key : ec.GetConfiguration().GetKeys()){
-		SetValue(key,ec.GetConfiguration().Get(key));
-	}
-}
+
