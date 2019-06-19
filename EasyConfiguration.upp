@@ -2,7 +2,7 @@ description "\377I255,212,0";
 
 uses
 	Core,
-	Cypher;
+	StreamCypher;
 
 file
 	EasyConfiguration.h,

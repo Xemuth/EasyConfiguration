@@ -51,6 +51,7 @@ bool EasyConfiguration::SetValue(String fieldName, const T &t){
 
 int EasyConfiguration::LoadConfiguration(String FilePath){
 	if (FileExists(FilePath)){
+		ConfigurationType.Clear();
 		FileOpened = FilePath;
 		FileIn in(FilePath);
 		if (in){
@@ -73,11 +74,15 @@ int EasyConfiguration::GetCount(){
 	return ConfigurationType.GetCount();
 }
 
+bool EasyConfiguration::setRC4Key(Upp::String _rc4Key){
+	rc4Key =_rc4Key;
+}
+
 bool EasyConfiguration::ResolveAndAddLine(String line){
 	try{
 		if(line.Find("->",1) != -1){ 
 			if(line.Find("=",line.Find("->",1) +3)>(line.Find("->",1)+3)){ // Here I must be sure their is value between -> and =
-				String type = line.Left(line.Find("->",1));
+				String type = ToLower( line.Left(line.Find("->",1)));
 				String name = line.Mid(line.Find("->",1)+2, line.Find("=",line.Find("->",1)) - (line.Find("->",1)+2) );
 				String value = line.Right(line.GetCount()-(line.Find("=")+1));
 				if(type.IsEqual("bool")){
@@ -103,7 +108,14 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 			    	SetValue<float>(name,std::stoi(value.ToStd()));
 				}else if(type.IsEqual("rc4")){
 					if (value.GetCount() > 0 &&  value[0] != '@'){
-						value = '@' + value;
+						Rc4.SetKey(rc4Key);
+						Upp::String decoded = Rc4.Encode(value);
+						if (decoded[decoded.GetCount()-1] == '@'){
+							value = '@' + decoded.Left(decoded.GetCount()-1);
+						}
+						else{
+							value = '@' + value;
+						}
 					}
 					SetValue<String>(name,value);
 				}else if(type.IsEqual("string")){
@@ -134,8 +146,17 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 				}
 				type="bool";
 			}else if(value.GetCount()> 0 && value[0] == '@'){
-				value.Replace("@","");
 				type="rc4";
+				SetValue<String>(name,value);
+			}else if(value.GetCount() > 0 &&  value[0] != '@'){
+				Rc4.SetKey(rc4Key);
+				Upp::String decoded = Rc4.Encode(value);
+				if (decoded[decoded.GetCount()-1] == '@'){
+					type="string";	
+					value = '@' + decoded.Left(decoded.GetCount()-1);
+				}else{
+					type="string";		
+				}
 				SetValue<String>(name,value);
 			}else{
 				type="string";	
@@ -162,40 +183,68 @@ bool EasyConfiguration::isStringisANumber(Upp::String stringNumber){
 
 bool EasyConfiguration::SaveConfiguration(){
 	if(FileOpened.GetCount() != 0){
-		FileIn in(FileOpened);
-		if(in){
-			for(const String &e : ConfigurationType.GetKeys()){
-				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
-					in << ((SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
-				}else if( ConfigurationType.Get(e).GetTypeName().IsEqual("bool")){
-					in << ((SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<bool>() <<"\n";
-				}else if(  ConfigurationType.Get(e).GetTypeName().IsEqual("int")){
-					in << ((SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<int>() <<"\n";
-				}
-			}
-			in.Close();
-		}
-	}
-}
-
-EasyConfiguration EasyConfiguration::SaveConfiguration(String filePath){
-	if(filePath.GetCount() != 0){
-		FileOut  out(filePath);
+		FileOut out(FileOpened);
 		if(out){
 			for(const String &e : ConfigurationType.GetKeys()){
 				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
-					
-					out << ((!SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((!SaveInRelaxed)? "->":"") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
-					
+					String val  = static_cast<String>(ConfigurationType.Get(e).Get<String>());
+					if(val[0] == '@'){
+						val = val.Mid(1,val.GetCount() -1);
+						val +='@';
+						Rc4.SetKey(rc4Key);
+						val = Rc4.Encode(val);
+						out << ((SaveInRelaxed)? "" : "rc4") << ((SaveInRelaxed)? "":"->") << e << "=" << val <<"\n";
+					}else{
+						out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
+					}
 				}else if( ConfigurationType.Get(e).GetTypeName().IsEqual("bool")){
-					out << ((!SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((!SaveInRelaxed)? "->":"") << e << "=" << ((ConfigurationType.Get(e).Get<int>()!=0)?"true":"false") <<"\n";
+					out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<bool>() <<"\n";
 				}else if(  ConfigurationType.Get(e).GetTypeName().IsEqual("int")){
-					out << ((!SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((!SaveInRelaxed)? "->":"") << e << "=" << ConfigurationType.Get(e).Get<int>() <<"\n";
+					out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<int>() <<"\n";
 				}
 			}
 			out.Close();
+			if(out.IsError()) { // check whether file was properly written
+				LOG("Error");
+				return false;
+			}
+			return true;
 		}
 	}
+	return false;
+}
+
+bool EasyConfiguration::SaveConfiguration(String filePath){
+	if(filePath.GetCount() != 0){
+		FileOut out(filePath);
+		if(out){
+			for(const String &e : ConfigurationType.GetKeys()){
+				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
+					String val  = static_cast<String>(ConfigurationType.Get(e).Get<String>());
+					if(val[0] == '@'){
+						val = val.Mid(1,val.GetCount() -1);
+						val +='@';
+						Rc4.SetKey(rc4Key);
+						val = Rc4.Encode(val);
+						out << ((SaveInRelaxed)? "" : "rc4") << ((SaveInRelaxed)? "":"->") << e << "=" << val <<"\n";
+					}else{
+						out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
+					}
+				}else if( ConfigurationType.Get(e).GetTypeName().IsEqual("bool")){
+					out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<bool>() <<"\n";
+				}else if(  ConfigurationType.Get(e).GetTypeName().IsEqual("int")){
+					out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<int>() <<"\n";
+				}
+			}
+			out.Close();
+			if(out.IsError()) { // check whether file was properly written
+				LOG("Error");
+				return false;
+			}
+			return true;
+		}
+	}
+	return false;
 }
 
 const String EasyConfiguration::GetFileOpened(){
@@ -235,6 +284,7 @@ EasyConfiguration::EasyConfiguration(Upp::String FilePath){
 }
 EasyConfiguration::EasyConfiguration(const EasyConfiguration &ec) {
 	SaveInRelaxed =  ec.SaveInRelaxed;
+	rc4Key = ec.rc4Key;
 	for(const String &key : ec.GetConfiguration().GetKeys()){
 		SetValue(key,ec.GetConfiguration().Get(key));
 	}
