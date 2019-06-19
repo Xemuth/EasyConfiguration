@@ -14,7 +14,8 @@ EasyConfiguration::EasyConfiguration(const EasyConfiguration &ec) {
 	SaveInRelaxed =ec.SaveInRelaxed;
 	rc4Key = ec.rc4Key;
 	FileOpened = ec.GetFileOpened();
-	UltraUpdate(ec,true,true);
+	auto e = Vector<String>();
+	UltraUpdate(ec,e,true,true);
 }
 
 int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old configuration
@@ -218,27 +219,38 @@ const String EasyConfiguration::GetFileOpened() const{
 	return FileOpened;
 }
 
-bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,bool update,bool merge){
+bool EasyConfiguration::FindInVectorString(Vector<String> &vector,String value){
+	for(String& val :vector){
+		if(val.IsEqual(value))
+			return true;	
+	}
+	return false;
+}
+
+bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,Vector<String> &exception,bool update,bool merge,bool ApplyExceptionUpdate,bool ApplyExceptionMerge){
 	bool trouver = false;
 	auto &ecConfigurationType=ec.GetConfiguration();
 	try{
 		for(const String  &key : ecConfigurationType.GetKeys()){
-			for(const String  &key2 : ConfigurationType.GetKeys() ){
-				if(key2.IsEqual(key)){
-					if(update){
-						if(ecConfigurationType.Get(key).GetTypeName().IsEqual("String")){
-							SetValue(key,ecConfigurationType.Get(key).Get<String>());
-						}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("bool")){
-							SetValue(key,ecConfigurationType.Get(key).Get<bool>());
-						}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("int")){
-							SetValue(key,ecConfigurationType.Get(key).Get<int>());
+			bool isException = FindInVectorString(exception,key);
+			if((isException && !ApplyExceptionUpdate) || !isException){
+				for(const String  &key2 : ConfigurationType.GetKeys() ){
+					if(key2.IsEqual(key)){
+						if(update){
+							if(ecConfigurationType.Get(key).GetTypeName().IsEqual("String")){
+								SetValue(key,ecConfigurationType.Get(key).Get<String>());
+							}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("bool")){
+								SetValue(key,ecConfigurationType.Get(key).Get<bool>());
+							}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("int")){
+								SetValue(key,ecConfigurationType.Get(key).Get<int>());
+							}
 						}
+						trouver= true;
+						break;
 					}
-					trouver= true;
-					break;
 				}
 			}
-			if(!trouver && merge){
+			if((isException && !ApplyExceptionMerge) || !isException ){
 				if(ecConfigurationType.Get(key).GetTypeName().IsEqual("String")){
 					SetValue<String>(key,ecConfigurationType.Get(key).Get<String>());
 				}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("bool")){
@@ -247,6 +259,7 @@ bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,bool update,bool
 					SetValue(key,ecConfigurationType.Get(key).Get<int>());
 				}
 			}
+			isException = false;
 			trouver = false;
 		}
 		return true;
@@ -257,19 +270,19 @@ bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,bool update,bool
 }
 		
 		
-bool EasyConfiguration::NewConfiguration(const EasyConfiguration& ec){ //Used to copy configuration from ec to this
+bool EasyConfiguration::NewConfiguration(const EasyConfiguration& ec, Vector<String> exception,bool ApplyExceptionUpdate,bool ApplyExceptionMerge){ //Used to copy configuration from ec to this
 	ConfigurationType.Clear();
-	return UltraUpdate(ec,false,true);
+	return UltraUpdate(ec,exception,false,true,ApplyExceptionUpdate,ApplyExceptionMerge);
 }
 
-bool EasyConfiguration::UpdateConfigurationFromMaster(const EasyConfiguration& ec){ //Used to update all this value by ec value (do not add new value to this, just update existing value)
-	return UltraUpdate(ec);
+bool EasyConfiguration::UpdateConfigurationFromMaster(const EasyConfiguration& ec, Vector<String> exception,bool ApplyExceptionUpdate,bool ApplyExceptionMerge){ //Used to update all this value by ec value (do not add new value to this, just update existing value)
+	return UltraUpdate(ec,exception,true,false,ApplyExceptionUpdate,ApplyExceptionMerge);
 }
-bool EasyConfiguration::MergeUpdateConfiguration(const EasyConfiguration& ec){ //Add and update every new configuration value
-	return UltraUpdate(ec,true,true);
+bool EasyConfiguration::MergeUpdateConfiguration(const EasyConfiguration& ec, Vector<String> exception,bool ApplyExceptionUpdate,bool ApplyExceptionMerge){ //Add and update every new configuration value
+	return UltraUpdate(ec,exception,true,true,ApplyExceptionUpdate,ApplyExceptionMerge);
 }
-bool EasyConfiguration::MergeConfiguration(const EasyConfiguration& ec){ //Add every new tag to actual configuration
-	return UltraUpdate(ec,false,true);
+bool EasyConfiguration::MergeConfiguration(const EasyConfiguration& ec, Vector<String> exception,bool ApplyExceptionUpdate,bool ApplyExceptionMerge){ //Add every new tag to actual configuration
+	return UltraUpdate(ec,exception,false,true,ApplyExceptionUpdate,ApplyExceptionMerge);
 }
 
 void EasyConfiguration::RelaxMode(bool b){

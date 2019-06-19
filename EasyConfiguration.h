@@ -74,8 +74,10 @@ class EasyConfiguration{
 				
 		bool ResolveAndAddLine(String line);
 		bool isStringisANumber(String stringNumber);
+		
+		bool FindInVectorString(Vector<String> &vector,String value);
 	protected:
-		bool UltraUpdate(const EasyConfiguration& ec,bool update = true,bool merge = false );
+		bool UltraUpdate(const EasyConfiguration& ec,Vector<String> &exception,bool update = true,bool merge = false,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true);
 		const String GetFileOpened() const;
 		String rc4Key="default";
 		const VectorMap<String,Upp::Value>& GetConfiguration()const;
@@ -84,10 +86,10 @@ class EasyConfiguration{
 		EasyConfiguration(Upp::String FilePath);
 		EasyConfiguration(const EasyConfiguration& ec); //Copy constructor 
 		
-		bool NewConfiguration(const EasyConfiguration& ec); //Used to copy configuration from ec to this
-		bool UpdateConfigurationFromMaster(const EasyConfiguration& ec); //Used to update all this value by ec value (do not add new value to this, just update existing value)
-		bool MergeUpdateConfiguration(const EasyConfiguration& ec); //Add and update every new configuration value
-		bool MergeConfiguration(const EasyConfiguration& ec); //Add every new tag to actual configuration
+		bool NewConfiguration(const EasyConfiguration& ec, Vector<String> exception= Vector<String>() ,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true); //Used to copy configuration from ec to this
+		bool UpdateConfigurationFromMaster(const EasyConfiguration& ec, Vector<String> exception= Vector<String>() ,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true); //Used to update all this value by ec value (do not add new value to this, just update existing value)
+		bool MergeUpdateConfiguration(const EasyConfiguration& ec, Vector<String> exception= Vector<String>() ,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true); //Add and update every new configuration value
+		bool MergeConfiguration(const EasyConfiguration& ec, Vector<String> exception= Vector<String>() ,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true); //Add every new tag to actual configuration
 		
 		void RelaxMode(bool b);
 		bool isRelaxMode();
