@@ -37,7 +37,6 @@ The package can work with two type of configuration :
 		updateTime=3            //Since this data is pure integer, programm resolve it as integer
 		block=                  //Here the data Value is empty so the default cast type is String
 
-
 Project created 17/06/2019
 By Clément Hamon 
 This project have to be used with Ultimate++ FrameWork and required the Core Librairy from it

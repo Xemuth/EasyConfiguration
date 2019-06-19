@@ -184,7 +184,9 @@ EasyConfiguration EasyConfiguration::SaveConfiguration(String filePath){
 		if(out){
 			for(const String &e : ConfigurationType.GetKeys()){
 				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
+					
 					out << ((!SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((!SaveInRelaxed)? "->":"") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
+					
 				}else if( ConfigurationType.Get(e).GetTypeName().IsEqual("bool")){
 					out << ((!SaveInRelaxed)? ConfigurationType.Get(e).GetTypeName() : "") << ((!SaveInRelaxed)? "->":"") << e << "=" << ((ConfigurationType.Get(e).Get<int>()!=0)?"true":"false") <<"\n";
 				}else if(  ConfigurationType.Get(e).GetTypeName().IsEqual("int")){
@@ -231,8 +233,8 @@ EasyConfiguration::EasyConfiguration(){
 EasyConfiguration::EasyConfiguration(Upp::String FilePath){
 	LoadConfiguration(FilePath);
 }
-EasyConfiguration::EasyConfiguration(const EasyConfiguration& ec) {
-//	this->RelaxMode(ec.isRelaxMode());
+EasyConfiguration::EasyConfiguration(const EasyConfiguration &ec) {
+	SaveInRelaxed =  ec.SaveInRelaxed;
 	for(const String &key : ec.GetConfiguration().GetKeys()){
 		SetValue(key,ec.GetConfiguration().Get(key));
 	}
