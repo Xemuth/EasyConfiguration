@@ -134,7 +134,7 @@ class EasyConfiguration {
 		} 
 		
 		int LoadConfiguration(String FilePath); //Return number of configuration loaded
-		friend void PrepareDefaultConfiguration();
+		friend void PrepareDefaultConfiguration(EasyConfiguration &ez);
 		
 };
 #endif
