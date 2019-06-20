@@ -63,7 +63,8 @@ License : https://www.ultimatepp.org/app$ide$About$en-us.html
 Thanks to UPP team !
 **********************************************************************/
 
-class EasyConfiguration{
+
+class EasyConfiguration {
 	private:
 		VectorMap<String,Upp::Value> ConfigurationType;
 		
@@ -133,7 +134,7 @@ class EasyConfiguration{
 		} 
 		
 		int LoadConfiguration(String FilePath); //Return number of configuration loaded
-		
 		friend void PrepareDefaultConfiguration();
+		
 };
 #endif
