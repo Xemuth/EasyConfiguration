@@ -47,89 +47,91 @@ bool EasyConfiguration::setRC4Key(Upp::String _rc4Key){
 
 bool EasyConfiguration::ResolveAndAddLine(String line){
 	try{
-		if(line.Find("->",1) != -1){ 
-			if(line.Find("=",line.Find("->",1) +3)>(line.Find("->",1)+3)){ // Here I must be sure their is value between -> and =
-				String type = ToLower( line.Left(line.Find("->",1)));
-				String name = line.Mid(line.Find("->",1)+2, line.Find("=",line.Find("->",1)) - (line.Find("->",1)+2) );
-				String value = line.Right(line.GetCount()-(line.Find("=")+1));
-				if(type.IsEqual("bool")){
-					if(value.Find("b")>-1 && isStringisANumber(value.Right(value.GetCount()-1)) ){
-						value.Replace("b","");
-						SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false));
-					}else if(value.IsEqual("true") || value.IsEqual("false")){
-						SetValue<bool>(name, ((value.IsEqual("true"))? true:false));
-					}else if (isStringisANumber(value)){
-						SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false)   );
+		if(!line[0] == '#'){
+			if(line.Find("->",1) != -1){ 
+				if(line.Find("=",line.Find("->",1) +3)>(line.Find("->",1)+3)){ // Here I must be sure their is value between -> and =
+					String type = ToLower( line.Left(line.Find("->",1)));
+					String name = line.Mid(line.Find("->",1)+2, line.Find("=",line.Find("->",1)) - (line.Find("->",1)+2) );
+					String value = line.Right(line.GetCount()-(line.Find("=")+1));
+					if(type.IsEqual("bool")){
+						if(value.Find("b")>-1 && isStringisANumber(value.Right(value.GetCount()-1)) ){
+							value.Replace("b","");
+							SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false));
+						}else if(value.IsEqual("true") || value.IsEqual("false")){
+							SetValue<bool>(name, ((value.IsEqual("true"))? true:false));
+						}else if (isStringisANumber(value)){
+							SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false)   );
+						}
+					}else if(type.IsEqual("int")){
+						if(value.GetCount() > 9){
+							SetValue<double>(name,std::stoi(value.ToStd()));
+						}else if(value.Find(",") || value.Find(".")){
+							SetValue<float>(name,std::stoi(value.ToStd()));
+						}else{
+							SetValue<int>(name,std::stoi(value.ToStd()));
+						}
+				    }else if(type.IsEqual("double")){
+				        SetValue<double>(name,std::stoi(value.ToStd()));
+				    }else if(type.IsEqual("float")){
+				    	SetValue<float>(name,std::stoi(value.ToStd()));
+					}else if(type.IsEqual("rc4")){
+						if (value.GetCount() > 0 &&  value[0] != '@'){
+							Rc4.SetKey(rc4Key);
+							Upp::String decoded = Rc4.Encode(value);
+							if (decoded[decoded.GetCount()-1] == '@'){
+								value = '@' + decoded.Left(decoded.GetCount()-1);
+							}
+							else{
+								value = '@' + value;
+							}
+						}
+						SetValue<String>(name,value);
+					}else if(type.IsEqual("string")){
+						SetValue<String>(name,value);
 					}
-				}else if(type.IsEqual("int")){
+					return true;
+				}
+			}
+			else if(line.Find("=",1)>1){
+				String name = line.Left(line.Find("="));
+				String value = line.Right(line.GetCount()-(line.Find("=")+1));
+				String type = "";
+				if(value.GetCount()> 0 && isStringisANumber(value)){
 					if(value.GetCount() > 9){
 						SetValue<double>(name,std::stoi(value.ToStd()));
 					}else if(value.Find(",") || value.Find(".")){
 						SetValue<float>(name,std::stoi(value.ToStd()));
 					}else{
+						type="int";
 						SetValue<int>(name,std::stoi(value.ToStd()));
 					}
-			    }else if(type.IsEqual("double")){
-			        SetValue<double>(name,std::stoi(value.ToStd()));
-			    }else if(type.IsEqual("float")){
-			    	SetValue<float>(name,std::stoi(value.ToStd()));
-				}else if(type.IsEqual("rc4")){
-					if (value.GetCount() > 0 &&  value[0] != '@'){
-						Rc4.SetKey(rc4Key);
-						Upp::String decoded = Rc4.Encode(value);
-						if (decoded[decoded.GetCount()-1] == '@'){
-							value = '@' + decoded.Left(decoded.GetCount()-1);
-						}
-						else{
-							value = '@' + value;
-						}
+				}else if(value.GetCount()> 0 && ((value[0] == 'b' && isStringisANumber(value.Right(value.GetCount()-1))) || (value.IsEqual("true") || value.IsEqual("false")))  ){
+					if(value.Find("b")>-1 && isStringisANumber(value.Right(value.GetCount()-1)) ){
+						value.Replace("b","");
+						SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false));
+					}else if(value.IsEqual("true") || value.IsEqual("false")){
+						SetValue<bool>(name, ((value.IsEqual("true"))? true:false));
+					}
+					type="bool";
+				}else if(value.GetCount()> 0 && value[0] == '@'){
+					type="rc4";
+					SetValue<String>(name,value);
+				}else if(value.GetCount() > 0 &&  value[0] != '@'){
+					Rc4.SetKey(rc4Key);
+					Upp::String decoded = Rc4.Encode(value);
+					if (decoded[decoded.GetCount()-1] == '@'){
+						type="string";	
+						value = '@' + decoded.Left(decoded.GetCount()-1);
+					}else{
+						type="string";		
 					}
 					SetValue<String>(name,value);
-				}else if(type.IsEqual("string")){
+				}else{
+					type="string";	
 					SetValue<String>(name,value);
-				}
+				}	
 				return true;
 			}
-		}
-		else if(line.Find("=",1)>1){
-			String name = line.Left(line.Find("="));
-			String value = line.Right(line.GetCount()-(line.Find("=")+1));
-			String type = "";
-			if(value.GetCount()> 0 && isStringisANumber(value)){
-				if(value.GetCount() > 9){
-					SetValue<double>(name,std::stoi(value.ToStd()));
-				}else if(value.Find(",") || value.Find(".")){
-					SetValue<float>(name,std::stoi(value.ToStd()));
-				}else{
-					type="int";
-					SetValue<int>(name,std::stoi(value.ToStd()));
-				}
-			}else if(value.GetCount()> 0 && ((value[0] == 'b' && isStringisANumber(value.Right(value.GetCount()-1))) || (value.IsEqual("true") || value.IsEqual("false")))  ){
-				if(value.Find("b")>-1 && isStringisANumber(value.Right(value.GetCount()-1)) ){
-					value.Replace("b","");
-					SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false));
-				}else if(value.IsEqual("true") || value.IsEqual("false")){
-					SetValue<bool>(name, ((value.IsEqual("true"))? true:false));
-				}
-				type="bool";
-			}else if(value.GetCount()> 0 && value[0] == '@'){
-				type="rc4";
-				SetValue<String>(name,value);
-			}else if(value.GetCount() > 0 &&  value[0] != '@'){
-				Rc4.SetKey(rc4Key);
-				Upp::String decoded = Rc4.Encode(value);
-				if (decoded[decoded.GetCount()-1] == '@'){
-					type="string";	
-					value = '@' + decoded.Left(decoded.GetCount()-1);
-				}else{
-					type="string";		
-				}
-				SetValue<String>(name,value);
-			}else{
-				type="string";	
-				SetValue<String>(name,value);
-			}	
-			return true;
 		}
 	}catch(...){
 		Cout()<<"Exception has occured in ResolveAndAddLine Methode	"<<"\n";
