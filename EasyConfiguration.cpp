@@ -3,6 +3,8 @@
 #include <cctype>
 using namespace Upp;
 
+
+
 EasyConfiguration::EasyConfiguration(){
 }
 
