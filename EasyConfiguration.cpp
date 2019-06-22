@@ -3,8 +3,6 @@
 #include <cctype>
 using namespace Upp;
 
-
-
 EasyConfiguration::EasyConfiguration(){
 }
 
@@ -49,7 +47,7 @@ bool EasyConfiguration::setRC4Key(Upp::String _rc4Key){
 
 bool EasyConfiguration::ResolveAndAddLine(String line){
 	try{
-		if(!line[0] == '#'){
+		if(line[0] != '#'){
 			if(line.Find("->",1) != -1){ 
 				if(line.Find("=",line.Find("->",1) +3)>(line.Find("->",1)+3)){ // Here I must be sure their is value between -> and =
 					String type = ToLower( line.Left(line.Find("->",1)));
