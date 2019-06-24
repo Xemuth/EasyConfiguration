@@ -104,6 +104,7 @@ class EasyConfiguration {
 		
 		template <class T>  //Return value from ConfigrationType
 		 T GetValue(String fieldName) const{
+		    fieldName = ToLower(fieldName);
 			int index = ConfigurationType.Find(fieldName);
 			if(index >= 0 && ConfigurationType[index].Is<T>()){
 				return (T)ConfigurationType[index].Get<T>();
@@ -115,6 +116,7 @@ class EasyConfiguration {
 		template <class T> 
 		bool SetValue(String fieldName, const T &t){
 			try{
+				fieldName = ToLower(fieldName);
 				if(ConfigurationType.Find(fieldName) == -1){ //We ensure that Fieldname not yet in the vector
 					if(&ConfigurationType.Add(fieldName,Value(t)))
 						return true;

@@ -51,7 +51,7 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 			if(line.Find("->",1) != -1){ 
 				if(line.Find("=",line.Find("->",1) +3)>(line.Find("->",1)+3)){ // Here I must be sure their is value between -> and =
 					String type = ToLower( line.Left(line.Find("->",1)));
-					String name = line.Mid(line.Find("->",1)+2, line.Find("=",line.Find("->",1)) - (line.Find("->",1)+2) );
+					String name = ToLower(line.Mid(line.Find("->",1)+2, line.Find("=",line.Find("->",1)) - (line.Find("->",1)+2) ));
 					String value = line.Right(line.GetCount()-(line.Find("=")+1));
 					if(type.IsEqual("bool")){
 						if(value.Find("b")>-1 && isStringisANumber(value.Right(value.GetCount()-1)) ){
@@ -93,7 +93,7 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 				}
 			}
 			else if(line.Find("=",1)>1){
-				String name = line.Left(line.Find("="));
+				String name = ToLower(line.Left(line.Find("=")));
 				String value = line.Right(line.GetCount()-(line.Find("=")+1));
 				String type = "";
 				if(value.GetCount()> 0 && isStringisANumber(value)){
