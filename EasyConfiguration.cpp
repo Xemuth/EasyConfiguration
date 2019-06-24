@@ -41,6 +41,29 @@ int EasyConfiguration::GetCount(){
 	return ConfigurationType.GetCount();
 }
 
+bool EasyConfiguration::ReloadConfiguration(){
+	if(FileOpened.GetCount() && FileExists(FileOpened)){
+		ConfigurationType.Clear();
+		LoadConfiguration(FileOpened);
+		return true;
+	}
+	return false
+}
+
+String EasyConfiguration::toString(){
+	String value= "";
+	for(String &key : ConfigurationType.GetKeys()){
+		if( ConfigurationType.Get(key).GetTypeName().IsEqual("String") ){
+			value  << key <<" : " << ConfigurationType.Get(key).Get<String>() <<"\n";
+		}else if(ConfigurationType.Get(key).GetTypeName().IsEqual("int") ){
+			value  << key <<" : " << asString( ConfigurationType.Get(key).Get<int>()) <<"\n";
+		}else if(ConfigurationType.Get(key).GetTypeName().IsEqual("bool") ){
+			value  << key <<" : " << ((ConfigurationType.Get(key).Get<bool>())? "true":"false") <<"\n";
+		}
+	}
+	return value;
+}
+
 bool EasyConfiguration::setRC4Key(Upp::String _rc4Key){
 	rc4Key =_rc4Key;
 }
@@ -150,6 +173,11 @@ bool EasyConfiguration::isStringisANumber(Upp::String stringNumber){
     return false;
 }
 
+Upp::String EasyConfiguration::washRC4(Upp::String source){ //it will only remove the @ at front 
+	if(source[0] == '@') source.Remove(0);
+	if(source[source.GetCount()-1] == '@') source.Remove(source.GetCount()-1);
+	return source;
+}
 bool EasyConfiguration::SaveConfiguration(){
 	if(FileOpened.GetCount() != 0){
 		FileOut out(FileOpened);

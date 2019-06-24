@@ -86,6 +86,9 @@ class EasyConfiguration {
 		EasyConfiguration();
 		EasyConfiguration(Upp::String FilePath);
 		EasyConfiguration(const EasyConfiguration& ec); //Copy constructor 
+		bool ReloadConfiguration();
+		
+		Upp::String washRC4(Upp::String source); //it will only remove the @ at front 
 		
 		bool NewConfiguration(const EasyConfiguration& ec, Vector<String> exception= Vector<String>() ,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true); //Used to copy configuration from ec to this
 		bool UpdateConfigurationFromMaster(const EasyConfiguration& ec, Vector<String> exception= Vector<String>() ,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true); //Used to update all this value by ec value (do not add new value to this, just update existing value)
@@ -96,6 +99,8 @@ class EasyConfiguration {
 		bool isRelaxMode();
 		int GetCount();
 		bool setRC4Key(Upp::String _rc4Key);
+		
+		String toString();
 		
 		bool SaveConfiguration();
 		bool SaveConfiguration(String filePath,bool changePath=false);
