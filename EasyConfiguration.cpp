@@ -23,8 +23,20 @@ int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old
 		FileOpened = FilePath;
 		FileIn in(FilePath);
 		if (in){
+			Upp::String buffer ="";
+			Upp::String commentaireBuffer ="";
+			int cpt = 0;
 			while(!in.IsEof()){
-				ResolveAndAddLine(in.GetLine());
+				buffer = in.GetLine();
+				if( buffer[0] == '#'){
+					commentaireBuffer+= buffer +"\n";
+				}else{
+					AddCommentaire(commentaireBuffer);
+					commentaireBuffer="";
+					ResolveAndAddLine(buffer);
+					cpt++;
+				}
+				
 			}
 			in.Close();
 			return ConfigurationType.GetCount();
@@ -47,16 +59,16 @@ bool EasyConfiguration::ReloadConfiguration(){
 		LoadConfiguration(FileOpened);
 		return true;
 	}
-	return false
+	return false;
 }
 
 String EasyConfiguration::toString(){
 	String value= "";
-	for(String &key : ConfigurationType.GetKeys()){
+	for(const String &key : ConfigurationType.GetKeys()){
 		if( ConfigurationType.Get(key).GetTypeName().IsEqual("String") ){
 			value  << key <<" : " << ConfigurationType.Get(key).Get<String>() <<"\n";
 		}else if(ConfigurationType.Get(key).GetTypeName().IsEqual("int") ){
-			value  << key <<" : " << asString( ConfigurationType.Get(key).Get<int>()) <<"\n";
+			value  << key <<" : " << AsString( ConfigurationType.Get(key).Get<int>()) <<"\n";
 		}else if(ConfigurationType.Get(key).GetTypeName().IsEqual("bool") ){
 			value  << key <<" : " << ((ConfigurationType.Get(key).Get<bool>())? "true":"false") <<"\n";
 		}
@@ -64,7 +76,7 @@ String EasyConfiguration::toString(){
 	return value;
 }
 
-bool EasyConfiguration::setRC4Key(Upp::String _rc4Key){
+void EasyConfiguration::setRC4Key(Upp::String _rc4Key){
 	rc4Key =_rc4Key;
 }
 
@@ -182,7 +194,10 @@ bool EasyConfiguration::SaveConfiguration(){
 	if(FileOpened.GetCount() != 0){
 		FileOut out(FileOpened);
 		if(out){
+			int cpt = 0;
+			
 			for(const String &e : ConfigurationType.GetKeys()){
+				if(CommentaireBuffer.Get(cpt).GetCount() > 0) out << CommentaireBuffer.Get(cpt);
 				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
 					String val  = static_cast<String>(ConfigurationType.Get(e).Get<String>());
 					if(val[0] == '@'){
@@ -199,6 +214,7 @@ bool EasyConfiguration::SaveConfiguration(){
 				}else if(  ConfigurationType.Get(e).GetTypeName().IsEqual("int")){
 					out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<int>() <<"\n";
 				}
+				cpt++;
 			}
 			out.Close();
 			if(out.IsError()) { // check whether file was properly written
@@ -209,6 +225,18 @@ bool EasyConfiguration::SaveConfiguration(){
 		}
 	}
 	return false;
+}
+
+void EasyConfiguration::AddCommentaire(String commentaire){
+	if(CommentaireBuffer.Find(ConfigurationType.GetCount()) >=0){
+		String buffer= 	CommentaireBuffer.Get(ConfigurationType.GetCount());
+		buffer << "\n" << commentaire;
+		CommentaireBuffer.Remove(ConfigurationType.GetCount());
+		CommentaireBuffer.Add(ConfigurationType.GetCount(),buffer);
+	}
+	else{
+		CommentaireBuffer.Add(ConfigurationType.GetCount(),commentaire);
+	}
 }
 
 bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){

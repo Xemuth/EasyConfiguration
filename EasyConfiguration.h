@@ -68,6 +68,8 @@ class EasyConfiguration {
 	private:
 		VectorMap<String,Upp::Value> ConfigurationType;
 		
+		VectorMap<int,String> CommentaireBuffer;
+		
 		bool SaveInRelaxed =true; //If set to false then the save mode will be "Strict Mode"
 		
 		String FileOpened=""; //Save when LoadConfiguration is used
@@ -98,13 +100,14 @@ class EasyConfiguration {
 		void RelaxMode(bool b);
 		bool isRelaxMode();
 		int GetCount();
-		bool setRC4Key(Upp::String _rc4Key);
+		void setRC4Key(Upp::String _rc4Key);
 		
 		String toString();
 		
 		bool SaveConfiguration();
 		bool SaveConfiguration(String filePath,bool changePath=false);
 		
+		void AddCommentaire(String commentaire);
 		
 		
 		template <class T>  //Return value from ConfigrationType
