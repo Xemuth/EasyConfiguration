@@ -1,7 +1,7 @@
 #ifndef _EasyConfiguration_EasyConfiguration_h_
 #define _EasyConfiguration_EasyConfiguration_h_
 #include <Core/Core.h>
-#include <StreamCypher/StreamCypher.h>
+#include "StreamCypherCp/StreamCypher.h"
 
 using namespace Upp;
 /********************************************************************
@@ -67,8 +67,7 @@ Thanks to UPP team !
 class EasyConfiguration {
 	private:
 		VectorMap<String,Upp::Value> ConfigurationType;
-		
-		VectorMap<int,String> CommentaireBuffer;
+		VectorMap<int,String> CommentaireBuffer; //used to stock everyComments
 		
 		bool SaveInRelaxed =true; //If set to false then the save mode will be "Strict Mode"
 		

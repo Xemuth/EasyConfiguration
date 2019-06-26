@@ -6,7 +6,13 @@ uses
 
 file
 	EasyConfiguration.h,
-	EasyConfiguration.cpp;
+	EasyConfiguration.cpp,
+	StreamCypherCp readonly separator,
+	StreamCypherCp\StreamCypher.h,
+	StreamCypherCp\Snow2.h,
+	StreamCypherCp\RC4.cpp,
+	StreamCypherCp\RC4.h,
+	StreamCypherCp\Snow2.cpp;
 
 mainconfig
 	"" = "";
