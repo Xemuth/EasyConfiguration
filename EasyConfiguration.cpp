@@ -31,12 +31,18 @@ int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old
 				if( buffer[0] == '#'){
 					commentaireBuffer+= buffer +"\n";
 				}else{
-					AddCommentaire(commentaireBuffer);
-					commentaireBuffer="";
+					if(commentaireBuffer.GetCount() > 0){ 
+						AddCommentaire(commentaireBuffer);
+						commentaireBuffer="";
+					}
 					ResolveAndAddLine(buffer);
 					cpt++;
 				}
 				
+			}
+			if(commentaireBuffer.GetCount() > 0){ 
+				AddCommentaire(commentaireBuffer);
+				commentaireBuffer="";
 			}
 			in.Close();
 			return ConfigurationType.GetCount();
@@ -49,6 +55,10 @@ const VectorMap<String,Upp::Value>& EasyConfiguration::GetConfiguration()const{
 	return this->ConfigurationType;	
 }
 
+const VectorMap<int,String>& EasyConfiguration::GetCommentaireBuffer() const{
+	return this->CommentaireBuffer;	
+}
+
 int EasyConfiguration::GetCount(){
 	return ConfigurationType.GetCount();
 }
@@ -56,6 +66,7 @@ int EasyConfiguration::GetCount(){
 bool EasyConfiguration::ReloadConfiguration(){
 	if(FileOpened.GetCount() && FileExists(FileOpened)){
 		ConfigurationType.Clear();
+		CommentaireBuffer.Clear();
 		LoadConfiguration(FileOpened);
 		return true;
 	}
@@ -87,8 +98,11 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 				if(line.Find("=",line.Find("->",1) +3)>(line.Find("->",1)+3)){ // Here I must be sure their is value between -> and =
 					String type = ToLower( line.Left(line.Find("->",1)));
 					String name = ToLower(line.Mid(line.Find("->",1)+2, line.Find("=",line.Find("->",1)) - (line.Find("->",1)+2) ));
+					Cout() << name <<"\n";
 					String value = line.Right(line.GetCount()-(line.Find("=")+1));
 					if(type.IsEqual("bool")){
+					//	value.TrimEnd(" ");
+					//	value.TrimStart( " " );
 						if(value.Find("b")>-1 && isStringisANumber(value.Right(value.GetCount()-1)) ){
 							value.Replace("b","");
 							SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false));
@@ -100,7 +114,7 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 					}else if(type.IsEqual("int")){
 						if(value.GetCount() > 9){
 							SetValue<double>(name,std::stoi(value.ToStd()));
-						}else if(value.Find(",") || value.Find(".")){
+						}else if(value.Find(",")!= -1 || value.Find(".") != -1){
 							SetValue<float>(name,std::stoi(value.ToStd()));
 						}else{
 							SetValue<int>(name,std::stoi(value.ToStd()));
@@ -191,13 +205,30 @@ Upp::String EasyConfiguration::washRC4(Upp::String source){ //it will only remov
 	return source;
 }
 bool EasyConfiguration::SaveConfiguration(){
-	if(FileOpened.GetCount() != 0){
-		FileOut out(FileOpened);
+	return SaveConfiguration(FileOpened);
+}
+
+void EasyConfiguration::AddCommentaire(String commentaire){
+	if(CommentaireBuffer.Find(ConfigurationType.GetCount()) != -1){
+		int count = ConfigurationType.GetCount();
+		Cout() << CommentaireBuffer.Get(count) <<"\n";
+		String buffer=CommentaireBuffer.Get(count);
+		buffer << "\n" << commentaire;
+		//CommentaireBuffer.(count,1);
+		CommentaireBuffer.Add(count,buffer);
+	}
+	else{
+		CommentaireBuffer.Add(ConfigurationType.GetCount(),commentaire);
+	}
+}
+
+bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){
+	if(filePath.GetCount() != 0){
+		FileOut out(filePath);
 		if(out){
 			int cpt = 0;
-			
 			for(const String &e : ConfigurationType.GetKeys()){
-				if(CommentaireBuffer.Get(cpt).GetCount() > 0) out << CommentaireBuffer.Get(cpt);
+				if(CommentaireBuffer.Find(cpt) != -1) out << CommentaireBuffer.Get(cpt);
 				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
 					String val  = static_cast<String>(ConfigurationType.Get(e).Get<String>());
 					if(val[0] == '@'){
@@ -216,51 +247,7 @@ bool EasyConfiguration::SaveConfiguration(){
 				}
 				cpt++;
 			}
-			out.Close();
-			if(out.IsError()) { // check whether file was properly written
-				LOG("Error");
-				return false;
-			}
-			return true;
-		}
-	}
-	return false;
-}
-
-void EasyConfiguration::AddCommentaire(String commentaire){
-	if(CommentaireBuffer.Find(ConfigurationType.GetCount()) >=0){
-		String buffer= 	CommentaireBuffer.Get(ConfigurationType.GetCount());
-		buffer << "\n" << commentaire;
-		CommentaireBuffer.Remove(ConfigurationType.GetCount());
-		CommentaireBuffer.Add(ConfigurationType.GetCount(),buffer);
-	}
-	else{
-		CommentaireBuffer.Add(ConfigurationType.GetCount(),commentaire);
-	}
-}
-
-bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){
-	if(filePath.GetCount() != 0){
-		FileOut out(filePath);
-		if(out){
-			for(const String &e : ConfigurationType.GetKeys()){
-				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
-					String val  = static_cast<String>(ConfigurationType.Get(e).Get<String>());
-					if(val[0] == '@'){
-						val = val.Mid(1,val.GetCount() -1);
-						val +='@';
-						Rc4.SetKey(rc4Key);
-						val = Rc4.Encode(val);
-						out << ((SaveInRelaxed)? "" : "rc4") << ((SaveInRelaxed)? "":"->") << e << "=" << val <<"\n";
-					}else{
-						out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
-					}
-				}else if( ConfigurationType.Get(e).GetTypeName().IsEqual("bool")){
-					out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<bool>() <<"\n";
-				}else if(  ConfigurationType.Get(e).GetTypeName().IsEqual("int")){
-					out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<int>() <<"\n";
-				}
-			}
+			if(CommentaireBuffer.Find(cpt) != -1) out << CommentaireBuffer.Get(cpt);
 			out.Close();
 			if(out.IsError()) { // check whether file was properly written
 				LOG("Error");
@@ -277,6 +264,10 @@ const String EasyConfiguration::GetFileOpened() const{
 	return FileOpened;
 }
 
+void EasyConfiguration::SetFileOpened(Upp::String file){
+	FileOpened = file;
+}
+
 bool EasyConfiguration::FindInVectorString(Vector<String> &vector,String value){
 	for(String& val :vector){
 		if(val.IsEqual(value))
@@ -287,6 +278,10 @@ bool EasyConfiguration::FindInVectorString(Vector<String> &vector,String value){
 
 bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,Vector<String> &exception,bool update,bool merge,bool ApplyExceptionUpdate,bool ApplyExceptionMerge){
 	bool trouver = false;
+	CommentaireBuffer.Clear();
+	for(const int &i : ec.GetCommentaireBuffer().GetKeys()){
+		AddCommentaire( static_cast<String>( ec.GetCommentaireBuffer().Get(i)));
+	}
 	auto &ecConfigurationType=ec.GetConfiguration();
 	try{
 		for(const String  &key : ecConfigurationType.GetKeys()){

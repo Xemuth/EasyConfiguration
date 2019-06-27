@@ -81,8 +81,11 @@ class EasyConfiguration {
 	protected:
 		bool UltraUpdate(const EasyConfiguration& ec,Vector<String> &exception,bool update = true,bool merge = false,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true);
 		const String GetFileOpened() const;
+		void SetFileOpened(Upp::String file);
+		
 		String rc4Key="default";
 		const VectorMap<String,Upp::Value>& GetConfiguration()const;
+		const VectorMap<int,String>& GetCommentaireBuffer() const;
 	public:
 		EasyConfiguration();
 		EasyConfiguration(Upp::String FilePath);

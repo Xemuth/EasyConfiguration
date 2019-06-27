@@ -1,8 +1,7 @@
 description "\377BI255,212,0";
 
 uses
-	Core,
-	StreamCypher;
+	Core;
 
 file
 	EasyConfiguration.h,
