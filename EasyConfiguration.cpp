@@ -147,7 +147,7 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 				String type = "";
 				if(value.GetCount()> 0 && isStringisANumber(value)){
 					if(value.GetCount() > 9){
-						SetValue<double>(name,std::stoi(value.ToStd()));
+						SetValue<double>(name,std::stod(value.ToStd()));
 					}else if(value.Find(",") || value.Find(".")){
 						SetValue<float>(name,std::stoi(value.ToStd()));
 					}else{
