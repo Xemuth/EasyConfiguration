@@ -28,17 +28,18 @@ int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old
 			int cpt = 0;
 			while(!in.IsEof()){
 				buffer = in.GetLine();
-				if( buffer[0] == '#'){
-					commentaireBuffer+= buffer +"\n";
-				}else{
-					if(commentaireBuffer.GetCount() > 0){ 
-						AddCommentaire(commentaireBuffer);
-						commentaireBuffer="";
+				if(buffer.GetCount() > 0){
+					if( buffer[0] == '#'){
+						commentaireBuffer+= buffer +"\n";
+					}else{
+						if(commentaireBuffer.GetCount() > 0){ 
+							AddCommentaire(commentaireBuffer);
+							commentaireBuffer="";
+						}
+						ResolveAndAddLine(buffer);
+						cpt++;
 					}
-					ResolveAndAddLine(buffer);
-					cpt++;
 				}
-				
 			}
 			if(commentaireBuffer.GetCount() > 0){ 
 				AddCommentaire(commentaireBuffer);
