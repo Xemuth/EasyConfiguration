@@ -75,7 +75,7 @@ class EasyConfiguration {
 		RC4 Rc4; //Define the default passPhrase of Encryption/Decryption rc4
 				
 		bool ResolveAndAddLine(String line);
-		bool isStringisANumber(String stringNumber);
+		bool isStringANumber(String stringNumber);
 		
 		bool FindInVectorString(Vector<String> &vector,String value);
 	protected:
@@ -109,7 +109,7 @@ class EasyConfiguration {
 		bool SaveConfiguration();
 		bool SaveConfiguration(String filePath,bool changePath=false);
 		
-		void AddCommentaire(String commentaire);
+		void AddCommentaire(int iterator,String commentaire);
 		
 		
 		template <class T>  //Return value from ConfigrationType

@@ -33,7 +33,7 @@ int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old
 						commentaireBuffer+= buffer +"\n";
 					}else{
 						if(commentaireBuffer.GetCount() > 0){ 
-							AddCommentaire(commentaireBuffer);
+							AddCommentaire(cpt,commentaireBuffer);
 							commentaireBuffer="";
 						}
 						ResolveAndAddLine(buffer);
@@ -42,7 +42,7 @@ int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old
 				}
 			}
 			if(commentaireBuffer.GetCount() > 0){ 
-				AddCommentaire(commentaireBuffer);
+				AddCommentaire(cpt,commentaireBuffer);
 				commentaireBuffer="";
 			}
 			in.Close();
@@ -104,12 +104,12 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 					if(type.IsEqual("bool")){
 					//	value.TrimEnd(" ");
 					//	value.TrimStart( " " );
-						if(value.Find("b")>-1 && isStringisANumber(value.Right(value.GetCount()-1)) ){
+						if(value.Find("b") !=-1 && isStringANumber(value.Right(value.GetCount()-1)) ){
 							value.Replace("b","");
 							SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false));
 						}else if(value.IsEqual("true") || value.IsEqual("false")){
 							SetValue<bool>(name, ((value.IsEqual("true"))? true:false));
-						}else if (isStringisANumber(value)){
+						}else if (isStringANumber(value)){
 							SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false)   );
 						}
 					}else if(type.IsEqual("int")){
@@ -146,17 +146,17 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 				String name = ToLower(line.Left(line.Find("=")));
 				String value = line.Right(line.GetCount()-(line.Find("=")+1));
 				String type = "";
-				if(value.GetCount()> 0 && isStringisANumber(value)){
+				if(value.GetCount()> 0 && isStringANumber(value)){
 					if(value.GetCount() > 9){
 						SetValue<double>(name,std::stod(value.ToStd()));
-					}else if(value.Find(",") || value.Find(".")){
+					}else if(value.Find(",") !=-1 || value.Find(".") !=-1){
 						SetValue<float>(name,std::stoi(value.ToStd()));
 					}else{
 						type="int";
 						SetValue<int>(name,std::stoi(value.ToStd()));
 					}
-				}else if(value.GetCount()> 0 && ((value[0] == 'b' && isStringisANumber(value.Right(value.GetCount()-1))) || (value.IsEqual("true") || value.IsEqual("false")))  ){
-					if(value.Find("b")>-1 && isStringisANumber(value.Right(value.GetCount()-1)) ){
+				}else if(value.GetCount()> 0 && ((value[0] == 'b' && isStringANumber(value.Right(value.GetCount()-1))) || (value.IsEqual("true") || value.IsEqual("false")))  ){
+					if(value.Find("b") !=-1 && isStringANumber(value.Right(value.GetCount()-1)) ){
 						value.Replace("b","");
 						SetValue<bool>(name, ((std::stoi(value.ToStd())!=0)? true:false));
 					}else if(value.IsEqual("true") || value.IsEqual("false")){
@@ -190,7 +190,7 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 	return false;
 }
 
-bool EasyConfiguration::isStringisANumber(Upp::String stringNumber){
+bool EasyConfiguration::isStringANumber(Upp::String stringNumber){
 	if (std::isdigit(stringNumber[0]) || (stringNumber.GetCount() > 1 && (stringNumber[0] == '+'))){
         for (int i = 1 ; i < stringNumber.GetCount(); ++i)
             if (!std::isdigit(stringNumber[i]))
@@ -209,17 +209,14 @@ bool EasyConfiguration::SaveConfiguration(){
 	return SaveConfiguration(FileOpened);
 }
 
-void EasyConfiguration::AddCommentaire(String commentaire){
-	if(CommentaireBuffer.Find(ConfigurationType.GetCount()) != -1){
-		int count = ConfigurationType.GetCount();
-		Cout() << CommentaireBuffer.Get(count) <<"\n";
-		String buffer=CommentaireBuffer.Get(count);
+void EasyConfiguration::AddCommentaire(int iterator,String commentaire){
+	if(CommentaireBuffer.Find(iterator) != -1){
+		String buffer=CommentaireBuffer.Get(iterator);
 		buffer << "\n" << commentaire;
-		//CommentaireBuffer.(count,1);
-		CommentaireBuffer.Add(count,buffer);
+		CommentaireBuffer.Add(iterator,buffer);
 	}
 	else{
-		CommentaireBuffer.Add(ConfigurationType.GetCount(),commentaire);
+		CommentaireBuffer.Add(iterator,commentaire);
 	}
 }
 
@@ -228,8 +225,14 @@ bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){
 		FileOut out(filePath);
 		if(out){
 			int cpt = 0;
+			for(int e :CommentaireBuffer.GetKeys()){
+				Cout() << "Clé: "<< e <<" Valeur: "<< 	CommentaireBuffer.Get(e)<<"\n";
+			}
 			for(const String &e : ConfigurationType.GetKeys()){
-				if(CommentaireBuffer.Find(cpt) != -1) out << CommentaireBuffer.Get(cpt);
+				if(CommentaireBuffer.Find(cpt) != -1){ 
+					Cout() << CommentaireBuffer.Get(cpt);
+					out << CommentaireBuffer.Get(cpt);
+				}
 				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
 					String val  = static_cast<String>(ConfigurationType.Get(e).Get<String>());
 					if(val[0] == '@'){
@@ -280,8 +283,9 @@ bool EasyConfiguration::FindInVectorString(Vector<String> &vector,String value){
 bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,Vector<String> &exception,bool update,bool merge,bool ApplyExceptionUpdate,bool ApplyExceptionMerge){
 	bool trouver = false;
 	CommentaireBuffer.Clear();
-	for(const int &i : ec.GetCommentaireBuffer().GetKeys()){
-		AddCommentaire( static_cast<String>( ec.GetCommentaireBuffer().Get(i)));
+	for(const int i : ec.GetCommentaireBuffer().GetKeys()){
+		Cout() <<  ec.GetCommentaireBuffer().Get(i) <<"\n";
+		AddCommentaire(i,  ec.GetCommentaireBuffer().Get(i) );
 	}
 	auto &ecConfigurationType=ec.GetConfiguration();
 	try{
