@@ -99,8 +99,8 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 				if(line.Find("=",line.Find("->",1) +3)>(line.Find("->",1)+3)){ // Here I must be sure their is value between -> and =
 					String type = ToLower( line.Left(line.Find("->",1)));
 					String name = ToLower(line.Mid(line.Find("->",1)+2, line.Find("=",line.Find("->",1)) - (line.Find("->",1)+2) ));
-					Cout() << name <<"\n";
-					String value = line.Right(line.GetCount()-(line.Find("=")+1));
+					String value = TrimBoth(line.Right(line.GetCount()-(line.Find("=")+1)));
+					
 					if(type.IsEqual("bool")){
 					//	value.TrimEnd(" ");
 					//	value.TrimStart( " " );
@@ -144,7 +144,7 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 			}
 			else if(line.Find("=",1)>1){
 				String name = ToLower(line.Left(line.Find("=")));
-				String value = line.Right(line.GetCount()-(line.Find("=")+1));
+				String value = TrimBoth(line.Right(line.GetCount()-(line.Find("=")+1)));
 				String type = "";
 				if(value.GetCount()> 0 && isStringANumber(value)){
 					if(value.GetCount() > 9){
@@ -202,7 +202,7 @@ bool EasyConfiguration::isStringANumber(Upp::String stringNumber){
 
 Upp::String EasyConfiguration::washRC4(Upp::String source){ //it will only remove the @ at front 
 	if(source[0] == '@') source.Remove(0);
-	if(source[source.GetCount()-1] == '@') source.Remove(source.GetCount()-1);
+	if(source.GetCount() > 0 && source[source.GetCount()-1] == '@') source.Remove(source.GetCount()-1);
 	return source;
 }
 bool EasyConfiguration::SaveConfiguration(){
@@ -225,12 +225,8 @@ bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){
 		FileOut out(filePath);
 		if(out){
 			int cpt = 0;
-			for(int e :CommentaireBuffer.GetKeys()){
-				Cout() << "Clé: "<< e <<" Valeur: "<< 	CommentaireBuffer.Get(e)<<"\n";
-			}
 			for(const String &e : ConfigurationType.GetKeys()){
 				if(CommentaireBuffer.Find(cpt) != -1){ 
-					Cout() << CommentaireBuffer.Get(cpt);
 					out << CommentaireBuffer.Get(cpt);
 				}
 				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
@@ -284,12 +280,12 @@ bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,Vector<String> &
 	bool trouver = false;
 	CommentaireBuffer.Clear();
 	for(const int i : ec.GetCommentaireBuffer().GetKeys()){
-		Cout() <<  ec.GetCommentaireBuffer().Get(i) <<"\n";
 		AddCommentaire(i,  ec.GetCommentaireBuffer().Get(i) );
 	}
 	auto &ecConfigurationType=ec.GetConfiguration();
 	try{
 		for(const String  &key : ecConfigurationType.GetKeys()){
+			Cout() << "Key : "<<key <<"\n";
 			bool isException = FindInVectorString(exception,key);
 			if((isException && !ApplyExceptionUpdate) || !isException){
 				for(const String  &key2 : ConfigurationType.GetKeys() ){
@@ -297,7 +293,7 @@ bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,Vector<String> &
 						if(update){
 							if(ecConfigurationType.Get(key).GetTypeName().IsEqual("String")){
 								SetValue(key,ecConfigurationType.Get(key).Get<String>());
-							}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("bool")){
+					 		}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("bool")){
 								SetValue(key,ecConfigurationType.Get(key).Get<bool>());
 							}else if(ecConfigurationType.Get(key).GetTypeName().IsEqual("int")){
 								SetValue(key,ecConfigurationType.Get(key).Get<int>());
