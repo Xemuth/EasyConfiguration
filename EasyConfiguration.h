@@ -1,6 +1,7 @@
 #ifndef _EasyConfiguration_EasyConfiguration_h_
 #define _EasyConfiguration_EasyConfiguration_h_
 #include <Core/Core.h>
+#include <string>
 #include "StreamCypherCp/StreamCypher.h"
 
 using namespace Upp;
@@ -33,13 +34,14 @@ The package can work with two type of configuration :
 	
 	
 	the second configuration is
-	Relaxed Mode where data type are no defined and resolved by programm :
-		type=global             //Here programm resolve it as String
-		instance=@string rc4    //SInce this data start by '@', programm resolve it as RC4 string
-		windows=b1              //SInce this data start by 'b' and is pure int after the first charactere, programm resolve it as Boolean (if first char was not 'b' but int so the programm would resolve it as integer
-		updateTime=3            //Since this data is pure integer, programm resolve it as integer
+	Relaxed Mode where data type are no defined and resolved by program :
+		type=global             //Here program resolve it as String
+		instance=@string rc4    //SInce this data start by '@', program resolve it as RC4 string
+		windows=b1              //SInce this data start by 'b' and is pure int after the first
+		character, program resolve it as Boolean (if first char was not 'b' but int so the program would resolve it as integer)
+		updateTime=3            //Since this data is pure integer, program resolve it as integer
 		block=                  //Here the data Value is empty so the default cast type is String
-		test=bÙºG smP¶Q        //Same as rc4->test see above but here rc4 type not specifier so you must ensure that rc4 string end by @ or the programm wont get it as rc4
+		test=bÙºG smP¶Q        //Same as rc4->test see above but here rc4 type not specifier so you must ensure that rc4 string end by @ or the program wont get it as rc4
  
 		
 Upp RC4 is specifique rc4 from Stream Cypher package (bazzar)
@@ -84,13 +86,14 @@ class EasyConfiguration {
 		void SetFileOpened(Upp::String file);
 		
 		String rc4Key="default";
-		const VectorMap<String,Upp::Value>& GetConfiguration()const;
+		
 		const VectorMap<int,String>& GetCommentaireBuffer() const;
 	public:
 		EasyConfiguration();
 		EasyConfiguration(Upp::String FilePath);
 		EasyConfiguration(const EasyConfiguration& ec); //Copy constructor 
 		bool ReloadConfiguration();
+		const VectorMap<String,Upp::Value>& GetConfiguration()const;
 		
 		Upp::String washRC4(Upp::String source); //it will only remove the @ at front 
 		
@@ -108,9 +111,11 @@ class EasyConfiguration {
 		
 		bool SaveConfiguration();
 		bool SaveConfiguration(String filePath,bool changePath=false);
+		bool SaveConfigurationAlternativ(String filePath,bool changePath=false);
+		bool SaveConfigurationTypageManuel(String filePath,bool changePath=false);
 		
 		void AddCommentaire(int iterator,String commentaire);
-		
+		void DeleteField(String key);
 		
 		template <class T>  //Return value from ConfigrationType
 		 T GetValue(String fieldName) const{
@@ -148,5 +153,9 @@ class EasyConfiguration {
 		int LoadConfiguration(String FilePath); //Return number of configuration loaded
 		friend void PrepareDefaultConfiguration(EasyConfiguration &ez);
 		
+		void clearConfType();
+		void clearComBuffer();
+		bool IsInteger(String str);
+		bool IsBoolean(String str);
 };
 #endif

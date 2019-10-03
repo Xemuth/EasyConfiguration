@@ -18,6 +18,7 @@ EasyConfiguration::EasyConfiguration(const EasyConfiguration &ec) {
 	UltraUpdate(ec,e,true,true);
 }
 
+
 int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old configuration
 	if (FileExists(FilePath)){
 		FileOpened = FilePath;
@@ -31,7 +32,7 @@ int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old
 				if(buffer.GetCount() > 0){
 					if( buffer[0] == '#'){
 						commentaireBuffer+= buffer +"\n";
-					}else{
+					}else{ 
 						if(commentaireBuffer.GetCount() > 0){ 
 							AddCommentaire(cpt,commentaireBuffer);
 							commentaireBuffer="";
@@ -46,9 +47,13 @@ int EasyConfiguration::LoadConfiguration(String FilePath){ //Do not clear an old
 				commentaireBuffer="";
 			}
 			in.Close();
+			if(ConfigurationType.GetCount() == 0){ // si le fichier est vide
+				return -1;
+			}
 			return ConfigurationType.GetCount();
 		}
 	}
+	//si le fichier n'existe pas
 	return 0;
 }
 
@@ -138,6 +143,8 @@ bool EasyConfiguration::ResolveAndAddLine(String line){
 						SetValue<String>(name,value);
 					}else if(type.IsEqual("string")){
 						SetValue<String>(name,value);
+					}else{
+						SetValue<String>(name,value);
 					}
 					return true;
 				}
@@ -224,6 +231,7 @@ bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){
 	if(filePath.GetCount() != 0){
 		FileOut out(filePath);
 		if(out){
+			
 			int cpt = 0;
 			for(const String &e : ConfigurationType.GetKeys()){
 				if(CommentaireBuffer.Find(cpt) != -1){ 
@@ -239,6 +247,7 @@ bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){
 						out << ((SaveInRelaxed)? "" : "rc4") << ((SaveInRelaxed)? "":"->") << e << "=" << val <<"\n";
 					}else{
 						out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
+						Cout() << ConfigurationType.Get(e).Get<String>() <<"\n";
 					}
 				}else if( ConfigurationType.Get(e).GetTypeName().IsEqual("bool")){
 					out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<bool>() <<"\n";
@@ -248,6 +257,7 @@ bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){
 				cpt++;
 			}
 			if(CommentaireBuffer.Find(cpt) != -1) out << CommentaireBuffer.Get(cpt);
+			
 			out.Close();
 			if(out.IsError()) { // check whether file was properly written
 				LOG("Error");
@@ -259,6 +269,71 @@ bool EasyConfiguration::SaveConfiguration(String filePath,bool changePath){
 	}
 	return false;
 }
+
+/* utile si on ne récupère que des types String de la part du GUI
+bool EasyConfiguration::SaveConfigurationAlternativ(String filePath,bool changePath){
+	if(filePath.GetCount() != 0){
+		FileOut out(filePath);
+		if(out){
+			
+			int cpt = 0;
+			for(const String &e : ConfigurationType.GetKeys()){
+				if(CommentaireBuffer.Find(cpt) != -1){ 
+					out << CommentaireBuffer.Get(cpt);
+				}
+				if(  ConfigurationType.Get(e).GetTypeName().IsEqual("String")){
+					String val  = static_cast<String>(ConfigurationType.Get(e).Get<String>());
+					if(val[0] == '@'){
+						val = val.Mid(1,val.GetCount() -1);
+						val +='@';
+						Rc4.SetKey(rc4Key);
+						val = Rc4.Encode(val);
+						out << ((SaveInRelaxed)? "" : "rc4") << ((SaveInRelaxed)? "":"->") << e << "=" << val <<"\n";
+					}else{
+						out << ((SaveInRelaxed)? "" : ConfigurationType.Get(e).GetTypeName()) << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).Get<String>() <<"\n";
+						Cout() << ConfigurationType.Get(e).Get<String>() <<"\n";
+					}
+				}else if(IsBoolean(ConfigurationType.Get(e).ToString())){
+					out << ((SaveInRelaxed)? "" : "bool") << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).ToString() <<"\n"; // ConfigurationType.Get(e).Get<bool>() NUL A CHIER
+				}else if(IsInteger(ConfigurationType.Get(e).ToString())){
+					out << ((SaveInRelaxed)? "" : "int") << ((SaveInRelaxed)? "":"->") << e << "=" << ConfigurationType.Get(e).ToString() <<"\n";// ConfigurationType.Get(e).Get<int>() NUL NUL NUL
+				}
+				cpt++;
+			}
+			if(CommentaireBuffer.Find(cpt) != -1) out << CommentaireBuffer.Get(cpt);
+			
+			out.Close();
+			if(out.IsError()){ // check whether file was properly written
+				LOG("Error");
+				return false;
+			}
+			if(changePath || FileOpened.GetCount()==0)FileOpened = filePath;
+			return true;
+		}
+	}
+	return false;
+}
+*/
+
+bool EasyConfiguration::IsBoolean(String str){
+	bool ret = false;
+	if(str == "true" || str == "false"){
+		ret = true;
+	}
+	return ret;
+}
+
+
+bool EasyConfiguration::IsInteger(String str){
+	bool ret = true;
+	for(int i=0; i< str.GetLength() ;i++){
+		if(!IsDigit(str[i])){
+			ret = false;
+		}
+	}	
+	return ret;
+}
+
 
 const String EasyConfiguration::GetFileOpened() const{
 	return FileOpened;
@@ -322,7 +397,21 @@ bool EasyConfiguration::UltraUpdate(const EasyConfiguration& ec,Vector<String> &
 	}
 	return false;
 }
-		
+
+void EasyConfiguration::DeleteField(String key){
+	if(ConfigurationType.Find(key) >= 0 && ConfigurationType.Find(key) < ConfigurationType.GetCount()){
+			Cout() << "Find key : " << ConfigurationType.Find(key) <<"\n";
+			ConfigurationType.Remove(ConfigurationType.Find(key),1);
+	}
+}
+void EasyConfiguration::clearConfType(){
+	ConfigurationType.Clear();
+}
+
+void EasyConfiguration::clearComBuffer(){
+	CommentaireBuffer.Clear();
+}
+
 		
 bool EasyConfiguration::NewConfiguration(const EasyConfiguration& ec, Vector<String> exception,bool ApplyExceptionUpdate,bool ApplyExceptionMerge){ //Used to copy configuration from ec to this
 	ConfigurationType.Clear();
