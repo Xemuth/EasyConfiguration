@@ -83,18 +83,19 @@ class EasyConfiguration {
 	protected:
 		bool UltraUpdate(const EasyConfiguration& ec,Vector<String> &exception,bool update = true,bool merge = false,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true);
 		const String GetFileOpened() const;
-		void SetFileOpened(Upp::String file);
+		
 		
 		String rc4Key="default";
 		
-		const VectorMap<int,String>& GetCommentaireBuffer() const;
+	
 	public:
 		EasyConfiguration();
 		EasyConfiguration(Upp::String FilePath);
 		EasyConfiguration(const EasyConfiguration& ec); //Copy constructor 
 		bool ReloadConfiguration();
 		const VectorMap<String,Upp::Value>& GetConfiguration()const;
-		
+		const VectorMap<int,String>& GetCommentaireBuffer() const;
+		void SetFileOpened(Upp::String file);
 		Upp::String washRC4(Upp::String source); //it will only remove the @ at front 
 		
 		bool NewConfiguration(const EasyConfiguration& ec, Vector<String> exception= Vector<String>() ,bool ApplyExceptionUpdate = true,bool ApplyExceptionMerge=true); //Used to copy configuration from ec to this
@@ -157,5 +158,40 @@ class EasyConfiguration {
 		void clearComBuffer();
 		bool IsInteger(String str);
 		bool IsBoolean(String str);
+		void CryptFile(String Path);
+		void DecryptFile(String Path);
+		bool ResolveAndAddCryptedLine(String line);
 };
+/*
+class RWConf : FileStream {
+private: 
+	
+	String path;
+	int       handle;
+public:
+	int GetHandle(){ return handle; }
+	
+	RWConf(String pth){
+		path = pth;
+		Open(path,BlockStream::READWRITE);
+	}
+	
+	String GetPath(){
+		return path;
+	}
+	void SetPath(String pth){
+		if(pth != ""){
+			path = pth;
+		}
+	}
+	dword Read(int64 at, void *ptr, dword size){
+		FileStream::Read(at,ptr,size);
+	}
+	
+	void Write(int64 at, const void *data, dword size){
+		FileStream::Write(at,data,size);
+	}
+};
+*/
+
 #endif
